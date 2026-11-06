@@ -1,0 +1,413 @@
+/**
+ * ==============================================================================
+ * Frontend DLS — Arquitectura de Design Tokens para producción
+ * Síntesis de Material Design 3, Microsoft Fluent 2 y Apple HIG
+ *
+ * Esta hoja es la FUENTE DE VERDAD de valores de la skill.
+ * Cómo adoptarla:
+ *   1. Reemplazá la escala --primitive-brand-* por la de tu marca.
+ *   2. No toques los nombres semánticos: son el contrato con los componentes.
+ *   3. En tus componentes usá SOLO tokens semánticos (--color-*, --space-*),
+ *      nunca primitivos (--primitive-*).
+ * ==============================================================================
+ */
+
+:root {
+  /* ==========================================================================
+   * 1. PRIMITIVOS — valores crudos. No los uses directamente en componentes.
+   * ========================================================================== */
+
+  /* Marca — reemplazá por tu escala */
+  --primitive-brand-50:  #eff6ff;
+  --primitive-brand-100: #dbeafe;
+  --primitive-brand-200: #bfdbfe;
+  --primitive-brand-300: #93c5fd;
+  --primitive-brand-400: #60a5fa;
+  --primitive-brand-500: #3b82f6;
+  --primitive-brand-600: #2563eb;
+  --primitive-brand-700: #1d4ed8;
+  --primitive-brand-800: #1e40af;
+  --primitive-brand-900: #1e3a8a;
+
+  /* Neutros */
+  --primitive-neutral-0:   #ffffff;
+  --primitive-neutral-50:  #f8fafc;
+  --primitive-neutral-100: #f1f5f9;
+  --primitive-neutral-200: #e2e8f0;
+  --primitive-neutral-300: #cbd5e1;
+  --primitive-neutral-400: #94a3b8;
+  --primitive-neutral-500: #64748b;
+  --primitive-neutral-600: #475569;
+  --primitive-neutral-700: #334155;
+  --primitive-neutral-800: #1e293b;
+  --primitive-neutral-900: #0f172a;
+  --primitive-neutral-950: #020617;
+
+  /* Semáforo */
+  --primitive-error-50:  #fef2f2;
+  --primitive-error-400: #f87171;
+  --primitive-error-500: #ef4444;
+  --primitive-error-600: #dc2626;
+  --primitive-error-900: #7f1d1d;
+
+  --primitive-success-50:  #f0fdf4;
+  --primitive-success-500: #22c55e;
+  --primitive-success-600: #16a34a;
+  --primitive-success-900: #14532d;
+
+  --primitive-warning-50:  #fffbeb;
+  --primitive-warning-500: #f59e0b;
+  --primitive-warning-600: #d97706;
+  --primitive-warning-900: #78350f;
+
+  /* ==========================================================================
+   * 2. ESPACIADO — grilla de 4px
+   * ========================================================================== */
+  --space-3xs: 2px;
+  --space-2xs: 4px;
+  --space-xs:  8px;
+  --space-sm:  12px;
+  --space-md:  16px;
+  --space-lg:  24px;
+  --space-xl:  32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+  --space-4xl: 96px;
+
+  /* ==========================================================================
+   * 3. FORMA — el radio crece con el tamaño del contenedor.
+   * Para elementos anidados: radio interno = radio externo − padding.
+   * ========================================================================== */
+  --radius-none: 0;
+  --radius-xs:   4px;    /* badges, tags de código */
+  --radius-sm:   8px;    /* inputs, checkboxes, tooltips */
+  --radius-md:   12px;   /* botones, cards, dropdowns */
+  --radius-lg:   16px;   /* modales, drawers, paneles */
+  --radius-xl:   28px;   /* FAB, banners */
+  --radius-full: 9999px; /* pills, avatares, chips */
+
+  /* ==========================================================================
+   * 4. TIPOGRAFÍA
+   * Nota: 16px (--font-size-body-md) es el piso del texto de lectura.
+   * Por debajo, Safari en iOS hace zoom automático al enfocar un input.
+   * ========================================================================== */
+  --font-family-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                      "Helvetica Neue", Arial, sans-serif;
+  --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --font-size-label-sm:  0.75rem;   /* 12px — badges, timestamps */
+  --font-size-body-sm:   0.875rem;  /* 14px — apoyo, tablas densas */
+  --font-size-body-md:   1rem;      /* 16px — lectura principal */
+  --font-size-title-sm:  1.125rem;  /* 18px — subtítulos */
+  --font-size-title-md:  1.375rem;  /* 22px — títulos de card/modal */
+  --font-size-headline:  1.75rem;   /* 28px — títulos de sección */
+  --font-size-headline-lg: 2rem;    /* 32px — título de página */
+  --font-size-display:   3.5rem;    /* 56px — hero */
+
+  /* Alternativa fluida: escala sin breakpoints */
+  --font-size-display-fluid: clamp(2rem, 1.2rem + 4vw, 3.5rem);
+
+  --font-weight-regular:  400;
+  --font-weight-medium:   500;
+  --font-weight-semibold: 600;
+  --font-weight-bold:     700;
+
+  --line-height-tight:   1.2;   /* títulos grandes */
+  --line-height-snug:    1.35;  /* títulos medianos */
+  --line-height-normal:  1.5;   /* cuerpo */
+  --line-height-relaxed: 1.75;  /* texto largo */
+
+  --measure: 65ch;              /* ancho de lectura cómodo (45-75 caracteres) */
+
+  /* ==========================================================================
+   * 5. MOTION
+   * ========================================================================== */
+  --motion-duration-fast:   150ms; /* hover, active, micro-interacciones */
+  --motion-duration-normal: 250ms; /* dropdowns, tooltips, dialogs */
+  --motion-duration-slow:   400ms; /* transiciones de página, acordeones */
+
+  --motion-ease-standard:   cubic-bezier(0.2, 0, 0, 1);    /* dentro de pantalla */
+  --motion-ease-decelerate: cubic-bezier(0, 0, 0.2, 1);    /* elementos que entran */
+  --motion-ease-accelerate: cubic-bezier(0.3, 0, 1, 1);    /* elementos que salen */
+  --motion-ease-spring:     cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+  /* ==========================================================================
+   * 6. DENSIDAD (Fluent 2) — modo táctil por defecto
+   * ========================================================================== */
+  --control-height: 40px;
+  --control-height-sm: 32px;
+  --touch-target-min: 44px;  /* Apple HIG / Material; WCAG 2.2 AA exige 24px */
+  --table-cell-padding-block: 12px;
+  --table-cell-padding-inline: 16px;
+
+  /* ==========================================================================
+   * 7. Z-INDEX — una escala nombrada evita la carrera de z-index: 99999
+   * ========================================================================== */
+  --z-base:     0;
+  --z-dropdown: 100;
+  --z-sticky:   200;
+  --z-drawer:   300;
+  --z-modal:    400;
+  --z-toast:    500;
+  --z-tooltip:  600;
+  /* <dialog>.showModal() y [popover] usan el top layer del navegador,
+     que está por encima de cualquier z-index. Preferilos. */
+
+  /* ==========================================================================
+   * 8. BREAKPOINTS (M3 window size classes) — de referencia; en CSS usá
+   * los valores literales en las media queries, y container queries en componentes.
+   * ========================================================================== */
+  --breakpoint-compact:  600px;
+  --breakpoint-medium:   840px;
+  --breakpoint-expanded: 1240px;
+
+  /* ==========================================================================
+   * 9. SAFE AREAS (Apple HIG) — notch y home indicator
+   * ========================================================================== */
+  --safe-area-top:    env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left:   env(safe-area-inset-left, 0px);
+  --safe-area-right:  env(safe-area-inset-right, 0px);
+}
+
+/* ============================================================================
+ * TOKENS SEMÁNTICOS — TEMA CLARO (default)
+ *
+ * Los tres bloques (light / @media dark / [data-theme=dark]) están duplicados
+ * a propósito: el @media respeta la preferencia del sistema y el atributo
+ * permite un toggle manual. CSS no puede combinar ambos en un solo selector.
+ *
+ * Alternativa moderna, si no necesitás soportar navegadores viejos:
+ *   :root { color-scheme: light dark;
+ *           --color-surface: light-dark(#ffffff, #020617); }
+ *   [data-theme="dark"]  { color-scheme: dark; }
+ *   [data-theme="light"] { color-scheme: light; }
+ * ============================================================================ */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Superficies */
+  --color-surface:                  var(--primitive-neutral-0);
+  --color-surface-container-low:    var(--primitive-neutral-50);
+  --color-surface-container:        var(--primitive-neutral-100);
+  --color-surface-container-high:   var(--primitive-neutral-200);
+  --color-surface-container-highest: var(--primitive-neutral-300);
+
+  /* Contenido sobre superficie */
+  --color-on-surface:          var(--primitive-neutral-900);
+  --color-on-surface-variant:  var(--primitive-neutral-600);
+  --color-on-surface-muted:    var(--primitive-neutral-500);
+  --color-on-surface-disabled: var(--primitive-neutral-400);
+
+  /* Marca */
+  --color-primary:              var(--primitive-brand-600);
+  --color-primary-hover:        var(--primitive-brand-700);
+  --color-primary-active:       var(--primitive-brand-800);
+  --color-primary-container:    var(--primitive-brand-50);
+  --color-on-primary:           #ffffff;
+  --color-on-primary-container: var(--primitive-brand-900);
+
+  /* Bordes y foco */
+  --color-outline:         var(--primitive-neutral-300);
+  --color-outline-variant: var(--primitive-neutral-200);
+  --color-focus-ring:      var(--primitive-brand-600);
+
+  /* Estados semánticos */
+  --color-error:              var(--primitive-error-600);
+  --color-error-container:    var(--primitive-error-50);
+  --color-on-error:           #ffffff;
+  --color-on-error-container: var(--primitive-error-900);
+
+  --color-success:           var(--primitive-success-600);
+  --color-success-container: var(--primitive-success-50);
+  --color-on-success:        #ffffff;
+
+  --color-warning:           var(--primitive-warning-600);
+  --color-warning-container: var(--primitive-warning-50);
+  --color-on-warning:        var(--primitive-neutral-900);
+
+  /* Elevación — la sombra refuerza la jerarquía; el tono de superficie la lidera */
+  --elevation-0: none;
+  --elevation-1: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+  --elevation-2: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
+  --elevation-3: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.08);
+  --elevation-4: 0 20px 25px -5px rgb(0 0 0 / 0.1),  0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+  --color-backdrop: rgb(0 0 0 / 0.5);
+}
+
+/* ============================================================================
+ * TOKENS SEMÁNTICOS — TEMA OSCURO (preferencia del sistema)
+ * ============================================================================ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --color-surface:                  var(--primitive-neutral-950);
+    --color-surface-container-low:    var(--primitive-neutral-900);
+    --color-surface-container:        var(--primitive-neutral-800);
+    --color-surface-container-high:   var(--primitive-neutral-700);
+    --color-surface-container-highest: var(--primitive-neutral-600);
+
+    --color-on-surface:          var(--primitive-neutral-50);
+    --color-on-surface-variant:  var(--primitive-neutral-300);
+    --color-on-surface-muted:    var(--primitive-neutral-400);
+    --color-on-surface-disabled: var(--primitive-neutral-500);
+
+    /* En oscuro se usa un tono más claro de la marca: el 600 sobre negro
+       no llega al contraste mínimo. */
+    --color-primary:              var(--primitive-brand-400);
+    --color-primary-hover:        var(--primitive-brand-300);
+    --color-primary-active:       var(--primitive-brand-200);
+    --color-primary-container:    var(--primitive-brand-900);
+    --color-on-primary:           var(--primitive-neutral-950);
+    --color-on-primary-container: var(--primitive-brand-100);
+
+    --color-outline:         var(--primitive-neutral-700);
+    --color-outline-variant: var(--primitive-neutral-800);
+    --color-focus-ring:      var(--primitive-brand-400);
+
+    --color-error:              var(--primitive-error-400);
+    --color-error-container:    rgb(239 68 68 / 0.15);
+    --color-on-error:           var(--primitive-neutral-950);
+    --color-on-error-container: var(--primitive-error-50);
+
+    --color-success:           var(--primitive-success-500);
+    --color-success-container: rgb(34 197 94 / 0.15);
+    --color-on-success:        var(--primitive-neutral-950);
+
+    --color-warning:           var(--primitive-warning-500);
+    --color-warning-container: rgb(245 158 11 / 0.15);
+    --color-on-warning:        var(--primitive-neutral-950);
+
+    /* Las sombras casi no se ven sobre fondo oscuro: la elevación la
+       comunica principalmente el tono de la superficie. */
+    --elevation-1: 0 1px 3px 0 rgb(0 0 0 / 0.3),  0 1px 2px -1px rgb(0 0 0 / 0.3);
+    --elevation-2: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+    --elevation-3: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.5);
+    --elevation-4: 0 20px 25px -5px rgb(0 0 0 / 0.6), 0 8px 10px -6px rgb(0 0 0 / 0.6);
+
+    --color-backdrop: rgb(0 0 0 / 0.7);
+  }
+}
+
+/* ============================================================================
+ * TOKENS SEMÁNTICOS — TEMA OSCURO (toggle manual del usuario)
+ * ============================================================================ */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-surface:                  var(--primitive-neutral-950);
+  --color-surface-container-low:    var(--primitive-neutral-900);
+  --color-surface-container:        var(--primitive-neutral-800);
+  --color-surface-container-high:   var(--primitive-neutral-700);
+  --color-surface-container-highest: var(--primitive-neutral-600);
+
+  --color-on-surface:          var(--primitive-neutral-50);
+  --color-on-surface-variant:  var(--primitive-neutral-300);
+  --color-on-surface-muted:    var(--primitive-neutral-400);
+  --color-on-surface-disabled: var(--primitive-neutral-500);
+
+  --color-primary:              var(--primitive-brand-400);
+  --color-primary-hover:        var(--primitive-brand-300);
+  --color-primary-active:       var(--primitive-brand-200);
+  --color-primary-container:    var(--primitive-brand-900);
+  --color-on-primary:           var(--primitive-neutral-950);
+  --color-on-primary-container: var(--primitive-brand-100);
+
+  --color-outline:         var(--primitive-neutral-700);
+  --color-outline-variant: var(--primitive-neutral-800);
+  --color-focus-ring:      var(--primitive-brand-400);
+
+  --color-error:              var(--primitive-error-400);
+  --color-error-container:    rgb(239 68 68 / 0.15);
+  --color-on-error:           var(--primitive-neutral-950);
+  --color-on-error-container: var(--primitive-error-50);
+
+  --color-success:           var(--primitive-success-500);
+  --color-success-container: rgb(34 197 94 / 0.15);
+  --color-on-success:        var(--primitive-neutral-950);
+
+  --color-warning:           var(--primitive-warning-500);
+  --color-warning-container: rgb(245 158 11 / 0.15);
+  --color-on-warning:        var(--primitive-neutral-950);
+
+  --elevation-1: 0 1px 3px 0 rgb(0 0 0 / 0.3),  0 1px 2px -1px rgb(0 0 0 / 0.3);
+  --elevation-2: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.4);
+  --elevation-3: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.5);
+  --elevation-4: 0 20px 25px -5px rgb(0 0 0 / 0.6), 0 8px 10px -6px rgb(0 0 0 / 0.6);
+
+  --color-backdrop: rgb(0 0 0 / 0.7);
+}
+
+/* ============================================================================
+ * MODO COMPACTO (apps de datos densos)
+ * El alto visual baja, pero el área efectiva de clic debe seguir cumpliendo
+ * el mínimo de accesibilidad — expandila con padding o pseudo-elemento.
+ * ============================================================================ */
+[data-density="compact"] {
+  --control-height: 32px;
+  --control-height-sm: 24px;
+  --table-cell-padding-block: 6px;
+  --table-cell-padding-inline: 10px;
+}
+
+/* ============================================================================
+ * BASE MÍNIMA
+ * ============================================================================ */
+:where(body) {
+  margin: 0;
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-body-md);
+  line-height: var(--line-height-normal);
+  background-color: var(--color-surface);
+  color: var(--color-on-surface);
+  -webkit-font-smoothing: antialiased;
+}
+
+:where(:focus-visible) {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+:where(img, picture, video, canvas, svg) {
+  display: block;
+  max-inline-size: 100%;
+}
+
+/* Evita que el foco quede tapado por headers sticky (WCAG 2.4.11) */
+:where(:target, :focus-visible) {
+  scroll-margin-block-start: var(--space-2xl);
+}
+
+.sr-only {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Reducir movimiento — NO usar `animation: none`: cancelaría los eventos
+   animationend de los que depende la lógica de cierre de toasts y modales. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Alto contraste de Windows: el sistema descarta fondos y sombras,
+   así que los límites necesitan un borde explícito. */
+@media (forced-colors: active) {
+  :where(button, .btn, .card, .chip) {
+    border: 1px solid ButtonText;
+  }
+}
