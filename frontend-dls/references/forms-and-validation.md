@@ -85,6 +85,23 @@ Receta: [stepper accesible](../examples/accessible-components-recipes.md#10-step
 - Si falla por red: conservá todo lo escrito y ofrecé reintentar. Nunca vacíes el formulario.
 - Éxito: confirmación **visible y persistente** cerca de lo enviado (o redirección con mensaje); un toast efímero solo para acciones de bajo riesgo.
 - Acciones destructivas: preferí **deshacer** a un modal de confirmación; si hay confirmación, que el botón diga la acción ("Eliminar proyecto"), no "Aceptar".
+- **Submit fuera del `<form>`** (`<button form="id">`): el estado de carga suele estar atado al formulario (`form.htmx-request button`) y a ese botón no le llega. Apuntá el indicador y el bloqueo al botón (`hx-disabled-elt`, `hx-indicator`) o al contenedor común.
+
+### Cambios sin guardar
+
+En un formulario de página completa, salir con cambios pendientes los pierde sin aviso. Si el formulario es largo o costoso de rehacer:
+
+- Detectá **cambios netos** (valor actual distinto del inicial), no "tocó un campo": quien escribe y borra no cambió nada.
+- Interceptá **todas** las salidas que controlás (Cancelar, volver, breadcrumb, enlaces del menú) con una confirmación que nombre la consecuencia ("Descartar cambios"), y `beforeunload` para cerrar o recargar la pestaña.
+- Contá como cambio también lo que no es un input de texto: un archivo elegido, un "quitar imagen", una fila agregada.
+- No avises si no hay cambios, ni después de guardar bien.
+
+### Archivos con vista previa
+
+- El estado que viaja (archivo elegido, marca de "quitar") y lo que se ve tienen que cambiar **juntos**. Si rechazás un archivo y restaurás la imagen anterior, restaurá también la marca de quitar: si no, la pantalla muestra una cosa y al guardar pasa otra.
+- Validá tamaño y tipo en el cliente como cortesía y en el servidor como autoridad; el error va junto al campo y dice el límite ("hasta 2 MB").
+- Cancelar el selector de archivos no debe borrar la elección anterior.
+- Receta de base: [file upload](../examples/accessible-components-recipes.md).
 
 ---
 
@@ -138,5 +155,7 @@ Para el estado de envío: `hx-disabled-elt="this"` deshabilita el control durant
 - [ ] Se valida al salir del campo y se revalida en cada tecla solo si ya hay error.
 - [ ] Errores: ícono + texto + `aria-describedby`; foco al primer inválido o a un resumen.
 - [ ] El servidor valida siempre; con HTMX, el 422 se intercambia.
-- [ ] El envío bloquea el doble submit y conserva los datos si falla.
+- [ ] El envío bloquea el doble submit y conserva los datos si falla (también si el botón está fuera del `<form>`).
+- [ ] Lo obligatorio u opcional está marcado en el label y con `required` / `aria-required`.
+- [ ] Formulario largo de página completa: avisa antes de descartar cambios netos.
 - [ ] Wizard: progreso visible, datos persistentes, resumen final.

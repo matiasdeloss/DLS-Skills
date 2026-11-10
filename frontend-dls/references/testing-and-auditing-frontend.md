@@ -30,7 +30,12 @@ node scripts/audit-frontend.js ./src --all                # corrida por defecto 
 - **Severidad**: `error` hace fallar el comando (exit 1; apto para CI y pre-commit); `warn` no. Exit 2 = ruta inexistente.
 - **Cómo leer un hallazgo**: `archivo:línea`, mensaje, regla (`a11y/img-missing-alt`), el fragmento y el arreglo sugerido. Es una **pregunta para verificar**, no una sentencia: puede haber falsos positivos (por ejemplo un `<input>` con `id` y el label en otro archivo).
 - **Qué escanea**: `.html`, `.css`, `.scss`, `.jsx`, `.tsx`, `.vue`, `.svelte`, `.astro`, `.php` (Blade), `.twig`, `.erb`. Ignora `node_modules`, `vendor`, `dist`, `build`, etc.
-- **Archivos de tokens** (`*tokens.css`, `*theme.css`, `*variables.css`…) quedan exentos de las reglas de valores crudos.
+- **Archivos de tokens** (`*tokens.css`, `*theme.css`, `*variables.css`…) quedan exentos de las reglas de valores crudos. En cualquier archivo, la **definición** de una variable (`--marca-color: #2e7d32`) nunca se marca, y tampoco un color que ya sale de un token (`rgba(var(--marca-rgb), .5)`).
+- **Espaciado**: pasan los múltiplos de 4px y también 1 y 2px (filete y medio paso). El arreglo depende de la escala del proyecto: `var(--space-*)` es la de la plantilla de esta skill, no un nombre obligatorio.
+- **HTMX**: un `<div hx-get>` solo es error si su disparador es el click (sin `hx-trigger`, o con `click` adentro). Con `hx-trigger="load"`, `revealed` o un evento (`refreshTable from:body`) es una región que se refresca sola, no un control.
+- **Plantillas**: los `>` de `->`, `=>` y de las expresiones `{{ }}` no cortan la etiqueta, así que un `alt`, `aria-label` o `hx-trigger` escrito después de una expresión de Blade se lee bien.
+- **Nombres accesibles**: `a11y/label-in-name` avisa si el `aria-label` de un botón o enlace no contiene su texto visible (WCAG 2.5.3); `a11y/aria-label-on-generic`, si hay un `aria-label` sobre un `<div>`/`<span>` sin `role`.
+- **Lo que no ve** (hay que revisarlo a mano): flujo y estado en JavaScript, recortes por `overflow` en anchos chicos, saltos de encabezado, foco tras un intercambio de contenido y labels que arma un componente en otro archivo. Un auditor sin hallazgos no dice que la pantalla esté bien.
 - Para un proyecto Laravel: `node scripts/audit-frontend.js resources/views` y `resources/css`.
 
 **Regla `perf/transition-all`** (warn, activa por defecto): marca `transition: all` y `transition-property: all`, que animan propiedades de layout y disparan transiciones inesperadas; listá solo lo que cambia. Un `will-change: all` ya lo cubre `perf/will-change-always-on`, junto con cualquier `will-change` declarado de forma permanente.

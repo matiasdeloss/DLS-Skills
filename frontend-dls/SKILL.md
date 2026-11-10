@@ -5,7 +5,7 @@ description: "Skill PRINCIPAL de frontend (sistema de diseño + ingeniería de U
 
 # Frontend DLS — Sistema de diseño e ingeniería de UI
 
-Skill **operativa**: dice *cómo construir y revisar* una interfaz. El *porqué* y el *estándar exacto* (leyes de UX, criterios WCAG, umbrales de Core Web Vitals, teoría de tokens, método de investigación) viven en la skill hermana **`frontend-dls-investigacion`**; acá se la invoca cuando hace falta ([cuándo](#cuándo-apoyarte-en-frontend-investigacion)).
+Skill **operativa**: dice *cómo construir y revisar* una interfaz. El *porqué* y el *estándar exacto* (leyes de UX, criterios WCAG, umbrales de Core Web Vitals, teoría de tokens, método de investigación) viven en la skill hermana **`frontend-dls-investigacion`**; acá se la invoca cuando hace falta ([cuándo](#cuándo-apoyarte-en-frontend-dls-investigacion)).
 
 ## Cómo usar esta skill
 
@@ -46,6 +46,8 @@ Regla de dueño único: si un dato está en las dos skills, el *estándar* manda
 
 **Desempate con otras skills de diseño.** Si otra skill (de estilo, de auditoría o de un plugin) contradice a esta, mandan estos mínimos: WCAG **2.2** AA y no 2.1; target táctil con piso de **24×24px (2.5.8)** y objetivo de 44×44px (el criterio 2.5.5 que exige 44px es nivel AAA, no AA); contraste 4.5:1 texto y 3:1 UI; `prefers-reduced-motion` respetado; animar solo `transform` y `opacity`. Una estética que pida el usuario (minimalista, editorial, etc.) puede cambiar la apariencia, nunca estos mínimos de accesibilidad.
 
+**Desempate con las reglas del proyecto.** Si el proyecto tiene su propio sistema (skill, checklist, guía de estilo o `DESIGN.md`), **manda el proyecto** en todo lo que sea convención: nombres de tokens, componentes obligatorios, estructura de modales y encabezados, dónde vive el estado, cantidad de acciones primarias. Esta skill manda solo en los mínimos de accesibilidad de arriba. Al revisar, una diferencia de convención se anota como **tensión**, no como defecto; es defecto únicamente si rompe un mínimo. Y si el proyecto trae su propio escáner o linter de frontend, corrélo primero: lo que ya cubre no se busca a mano.
+
 ---
 
 ## Referencias (leé solo la que corresponde)
@@ -67,7 +69,7 @@ Regla de dueño único: si un dato está en las dos skills, el *estándar* manda
 
 - **[examples/design-tokens.css](./examples/design-tokens.css)** — tokens completos light/dark, roles, elevación, tipografía, motion, densidad. **Fuente de verdad de valores.**
 - **[examples/accessible-components-recipes.md](./examples/accessible-components-recipes.md)** — skip link, dialog, combobox, tabs, toast, campo validado, accordion, alert, file upload, stepper.
-- **[scripts/audit-frontend.js](./scripts/audit-frontend.js)** — auditor estático sin dependencias; `--json`, `--only=a11y,perf,tokens,markup,security`, `--quiet`; exit 1 si hay errores (apto CI). La categoría `slop` (heurísticas "se ve genérico", siempre warn) es opt-in: `--only=slop` o `--all`.
+- **[scripts/audit-frontend.js](./scripts/audit-frontend.js)** — auditor estático sin dependencias; `--json`, `--only=a11y,perf,tokens,markup,security`, `--quiet`; exit 1 si hay errores (apto CI). Entiende Blade y HTMX (no marca los contenedores que se refrescan por evento) y respeta los tokens del proyecto; qué ve y qué no, en [testing-and-auditing-frontend §2](./references/testing-and-auditing-frontend.md#2-el-auditor-estático-audit-frontendjs). La categoría `slop` (heurísticas "se ve genérico", siempre warn) es opt-in: `--only=slop` o `--all`.
 
 ---
 
@@ -77,7 +79,7 @@ Regla de dueño único: si un dato está en las dos skills, el *estándar* manda
 
 **`type` explícito en cada `<button>`.** Dentro de un `<form>` el default es `submit`: un "Cancelar" sin `type="button"` envía el formulario.
 
-**Animá solo `transform` y `opacity`.** El resto fuerza reflow por frame y ensucia el CLS.
+**Animá solo `transform` y `opacity`.** Son las que resuelve el compositor. Las de layout (`width`, `height`, `top`, `margin`) fuerzan reflow por frame y ensucian el CLS; las de pintura (`color`, `background-color`) no recalculan layout, pero repintan en cada frame.
 
 **Feedback antes de 100ms, resolución antes de 400ms.** Si tarda más: UI optimista o skeleton del tamaño exacto del contenido final.
 
@@ -96,18 +98,22 @@ Regla de dueño único: si un dato está en las dos skills, el *estándar* manda
 Marcá lo que falla y citá el principio.
 
 **Semántica y estructura**
-- [ ] ¿Elementos nativos en vez de `<div>` con listeners? ¿Un solo `<h1>` y headings sin saltos? ¿Landmarks (`header`, `nav`, `main`, `footer`)?
+- [ ] ¿Elementos nativos en vez de `<div>` con listeners? ¿Un solo `<h1>` por página y headings sin saltos? ¿Landmarks (`header`, `nav`, `main`, `footer`)? (Un diálogo modal abre su propio contexto: el nivel de su título lo fija la convención del proyecto; lo exigible es `aria-labelledby` y no saltar niveles adentro.)
 
 **Interacción y accesibilidad**
-- [ ] ¿Teclado completo sin trampas? ¿`:focus-visible` visible y con contraste?
-- [ ] ¿Targets ≥ 44×44px (mínimo absoluto WCAG 2.2: 24×24)? ¿Contraste 4.5:1 texto / 3:1 UI?
+- [ ] ¿Teclado completo sin trampas? ¿`:focus-visible` visible y con contraste? Tras un cambio dinámico, ¿el foco queda en un lugar sensato y no en el `body`?
+- [ ] ¿Targets de 44×44px como objetivo (piso WCAG 2.2 AA: 24×24)? Cuenta el **área que responde al toque**, no el dibujo: un ícono de 36px con margen o pseudo-elemento que lleva el área a 44px cumple. ¿Contraste 4.5:1 texto / 3:1 UI?
 - [ ] ¿Cada input con `<label for>`? ¿Botones de ícono con `aria-label`? ¿Errores con `aria-describedby`?
+- [ ] Si un control con texto visible lleva `aria-label`, ¿el `aria-label` **contiene ese texto** (WCAG 2.5.3)? ¿Los controles repetidos en una lista se distinguen por nombre ("Editar a Ana Pérez")?
+- [ ] ¿Los resultados que cambian sin recargar (búsqueda, filtros, conteo) se anuncian en una región viva?
 - [ ] ¿`<button>` con `type` explícito? ¿Modales con nombre accesible (`aria-labelledby`)?
 
 **Diseño y sistema**
 - [ ] ¿Agrupación por proximidad y una sola acción primaria?
 - [ ] ¿Los 8 estados, incluidos loading y empty (con sus tres variantes)?
-- [ ] ¿Espaciado en la grilla de 4px y colores vía tokens semánticos?
+- [ ] ¿Espaciado en la grilla de 4px y colores vía tokens semánticos (los del proyecto, se llamen como se llamen)?
+- [ ] ¿Las filas con anchos fijos, `nowrap` u `overflow: hidden` siguen mostrando todo a 375px? ¿Nada informativo se oculta por breakpoint sin alternativa?
+- [ ] ¿Los gráficos hechos con `div`/`span` tienen texto equivalente y no dependen solo del color?
 - [ ] ¿Funciona en modo oscuro y `forced-colors`? ¿Existe en Component Gallery y seguimos su nomenclatura?
 
 **Rendimiento**

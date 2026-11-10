@@ -30,7 +30,7 @@ const path = require('path');
 // Configuración
 // ---------------------------------------------------------------------------
 
-const EXTENSIONS = new Set(['.html', '.htm', '.css', '.scss', '.jsx', '.tsx', '.vue', '.svelte', '.astro', '.php', '.twig', '.erb']);
+const EXTENSIONS = new Set(['.html', '.htm', '.css', '.scss', '.js', '.ts', '.jsx', '.tsx', '.vue', '.svelte', '.astro', '.php', '.twig', '.erb']);
 const IGNORED_DIRS = new Set(['node_modules', '.git', 'dist', 'build', '.next', 'out', 'coverage', '.cache', 'vendor', '.svelte-kit']);
 // Archivos donde los valores crudos son legítimos (son la definición de los tokens)
 const TOKEN_FILE_PATTERN = /(tokens|theme|variables|palette|primitives|_vars|globals)\.(css|scss|ts|js)$/i;
@@ -53,6 +53,23 @@ const STYLES = ['.css', '.scss', '.vue', '.svelte', '.astro'];
 const SCRIPTS = ['.jsx', '.tsx', '.vue', '.svelte', '.astro'];
 // Plantillas de servidor: Blade, Twig, ERB
 const TEMPLATES = ['.php', '.twig', '.erb'];
+
+// Valor de un atributo dentro de una etiqueta ya recortada; null si no está.
+function attr(tag, name) {
+  const m = new RegExp(`(?<![\\w:-])${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)')`, 'i').exec(tag);
+  return m ? (m[1] !== undefined ? m[1] : m[2]) : null;
+}
+
+// ¿Hay en el archivo un <label for> (o htmlFor) que apunte a este id?
+function hasLabelFor(content, id) {
+  if (!id) return false;
+  return [`for="${id}"`, `for='${id}'`, `htmlFor="${id}"`, `htmlFor='${id}'`].some(s => content.includes(s));
+}
+
+// Texto comparable: sin etiquetas, sin expresiones de plantilla, en minúsculas.
+function plainText(s) {
+  return s.replace(/<[^>]*>/g, ' ').replace(/\{\{[\s\S]*?\}\}/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+}
 
 const RULES = [
   // ---------------------------------------------------------------- a11y ---
@@ -91,10 +108,19 @@ const RULES = [
     category: 'a11y',
     severity: SEVERITY.ERROR,
     exts: [...MARKUP],
-    pattern: /<(div|span|li|td|tr|p|i|article|section)\b[^>]*\s(?:@click|x-on:click|wire:click|onclick|hx-(?:get|post|put|delete|patch))\s*=/gi,
+    pattern: /<(div|span|li|td|tr|p|i|article|section)\b[^>]*\s(?:@click|x-on:click|wire:click|onclick|hx-(?:get|post|put|delete|patch))\s*=[^>]*>/gi,
     message: 'elemento no interactivo con handler de click',
     fix: 'No recibe foco, no responde a Enter/Space y no se anuncia como accionable. Usá <button type="button">; si navega, <a href>. Si no hay alternativa, necesita role, tabindex="0" y handler de teclado.',
-    skip: (m) => /\brole\s*=/.test(m[0]) && /\btabindex\s*=/i.test(m[0]),
+    skip: (m) => {
+      const tag = m[0];
+      if (/\brole\s*=/.test(tag) && /\btabindex\s*=/i.test(tag)) return true;
+      if (/\s(?:@click|x-on:click|wire:click|onclick)\s*=/i.test(tag)) return false;
+      // HTMX: sin hx-trigger el disparador de un <div> es el click. Con un hx-trigger
+      // que no incluye click (load, revealed, un evento propio, "x from:body") el
+      // elemento es una región que se refresca sola, no un control.
+      const trigger = attr(tag, 'hx-trigger');
+      return trigger !== null && !/\bclick\b/i.test(trigger);
+    },
   },
   {
     id: 'a11y/role-button-without-tabindex',
@@ -104,7 +130,8 @@ const RULES = [
     pattern: /<[a-z]+\b[^>]*\brole\s*=\s*["']button["'][^>]*>/gi,
     message: 'role="button" sin tabindex',
     fix: 'role solo describe, no agrega comportamiento. Necesita tabindex="0" y handlers de Enter/Space — o mejor, un <button> real.',
-    skip: (m) => /\btabindex\s*=/i.test(m[0]),
+    // <a href>, <button>, <input> y <summary> ya reciben foco de forma nativa
+    skip: (m) => /\btabindex\s*=/i.test(m[0]) || /^<(?:button|input|summary)\b/i.test(m[0]) || /^<a\b[^>]*\bhref\s*=/i.test(m[0]),
   },
   {
     id: 'a11y/icon-button-without-label',
@@ -133,10 +160,45 @@ const RULES = [
     severity: SEVERITY.WARN,
     exts: MARKUP,
     pattern: /<input\b(?![^>]*\baria-label)[^>]*\bplaceholder\s*=[^>]*>/gi,
-    message: 'input con placeholder: verificá que tenga <label for>',
-    fix: 'El placeholder no es un label: desaparece al escribir. Confirmá que exista un <label for="…"> apuntando a este id.',
-    // Solo los que SÍ tienen id: los que no lo tienen ya los reporta input-without-label
-    skip: (m) => !/\bid\s*=/.test(m[0]),
+    message: 'input con placeholder y sin <label for> en este archivo',
+    fix: 'El placeholder no es un label: desaparece al escribir. Confirmá que exista un <label for="…"> apuntando a este id; si lo arma un componente o vive en otro archivo, este aviso se descarta.',
+    // Solo los que SÍ tienen id (los que no, ya los reporta input-without-label)
+    // y cuyo <label for> no aparece en el mismo archivo.
+    skip: (m, content) => {
+      const id = attr(m[0], 'id');
+      return id === null || hasLabelFor(content, id);
+    },
+  },
+  {
+    // ARIA prohíbe nombrar roles genéricos: el aria-label de un <div>/<span> sin
+    // role se ignora o se anuncia de forma inconsistente.
+    id: 'a11y/aria-label-on-generic',
+    category: 'a11y',
+    severity: SEVERITY.WARN,
+    exts: MARKUP,
+    pattern: /<(div|span|i)\b[^>]*\baria-label\s*=[^>]*>/gi,
+    message: 'aria-label sobre un elemento sin rol',
+    fix: 'Un <div>/<span>/<i> sin role no admite nombre accesible: muchos lectores lo ignoran. Dale un role que lo admita (img, group, status…), usá texto con .visually-hidden / .sr-only, o mové el aria-label al control.',
+    skip: (m) => /\brole\s*=/i.test(m[0]),
+  },
+  {
+    // WCAG 2.5.3 Label in Name: el nombre accesible debe contener el texto visible,
+    // o el control por voz ("clic en Guardar") no encuentra el control.
+    id: 'a11y/label-in-name',
+    category: 'a11y',
+    severity: SEVERITY.WARN,
+    exts: MARKUP,
+    pattern: /<(button|a)\b[^>]*\baria-label\s*=\s*"([^"]*)"[^>]*>([\s\S]{0,400}?)<\/\1>/gi,
+    message: 'el aria-label no contiene el texto visible (WCAG 2.5.3)',
+    fix: 'El aria-label reemplaza al texto visible como nombre accesible. Hacé que lo incluya tal cual ("Acceso total: ver permisos de…"), o quitá el aria-label y sumá el contexto con .visually-hidden / aria-describedby. Descartalo si el texto es un ícono por ligadura.',
+    skip: (m) => {
+      const inner = m[3];
+      // Directivas, entidades o expresiones que no se pueden evaluar: no se opina.
+      if (/@\w|\{!!|<\?|&\w+;/.test(inner)) return true;
+      const visible = plainText(inner);
+      if (visible.length < 2 || /[{}]/.test(visible)) return true;
+      return plainText(m[2]).includes(visible);
+    },
   },
   {
     id: 'a11y/viewport-blocks-zoom',
@@ -242,7 +304,8 @@ const RULES = [
     category: 'perf',
     severity: SEVERITY.WARN,
     exts: STYLES,
-    pattern: /transition\s*:\s*[^;{}]*\b(width|height|top|left|right|bottom|margin(?:-\w+)?|padding(?:-\w+)?)\b[^;{}]*;/gi,
+    // El lookahead acepta la última declaración de un bloque, que puede no llevar `;`
+    pattern: /transition\s*:\s*[^;{}]*\b(width|height|top|left|right|bottom|margin(?:-\w+)?|padding(?:-\w+)?)\b[^;{}]*(?=[;}])/gi,
     message: 'transición sobre una propiedad de layout',
     fix: 'width/height/top/left/margin fuerzan reflow en cada frame: se ve entrecortado y ensucia el CLS. Animá transform y opacity.',
   },
@@ -271,28 +334,36 @@ const RULES = [
     category: 'tokens',
     severity: SEVERITY.WARN,
     exts: STYLES,
-    pattern: /(?:color|background(?:-color)?|border(?:-\w+)?-color|fill|stroke|box-shadow)\s*:\s*[^;{}]*?(#[0-9a-f]{3,8}\b|\brgba?\([^)]*\)|\bhsla?\([^)]*\))/gi,
+    // El lookbehind deja afuera las definiciones de tokens (--marca-color: #fff),
+    // que son legítimas en cualquier archivo.
+    pattern: /(?<![\w-])(?:(?:[a-z]+-)*color|background|fill|stroke|box-shadow)\s*:\s*[^;{}]*?(#[0-9a-f]{3,8}\b|\brgba?\([^)]*\)|\bhsla?\([^)]*\))/gi,
     message: 'color hardcodeado en vez de token',
-    fix: 'Un hex en un componente no cambia con el tema: el día que agregues modo oscuro hay que auditar archivo por archivo. Usá var(--color-*).',
+    fix: 'Un hex en un componente no cambia con el tema: el día que agregues modo oscuro hay que auditar archivo por archivo. Usá el token semántico del proyecto (en la plantilla de esta skill, var(--color-*)).',
     skipFile: (filePath) => TOKEN_FILE_PATTERN.test(path.basename(filePath)),
-    // rgb(0 0 0 / .5) en sombras y currentColor son aceptables
-    skip: (m) => /transparent|currentColor/i.test(m[0]),
+    skip: (m) => {
+      if (/transparent|currentColor/i.test(m[0])) return true;
+      // rgb(var(--marca-rgb) / .5), rgba(var(--marca-rgb), .5) y hsl(from var(--x) …)
+      // ya toman el color de un token: solo le agregan opacidad.
+      return /^(?:rgb|hsl)a?\(\s*(?:var\(|from\b)/i.test(m[1]);
+    },
   },
   {
     id: 'tokens/off-grid-spacing',
     category: 'tokens',
     severity: SEVERITY.WARN,
     exts: STYLES,
-    pattern: /\b(?:margin|padding|gap|row-gap|column-gap|inset)(?:-(?:top|right|bottom|left|block|inline)(?:-(?:start|end))?)?\s*:\s*([^;{}]+);/gi,
+    // El lookbehind deja afuera las definiciones de tokens (--card-padding: 5px).
+    pattern: /(?<![\w-])(?:margin|padding|gap|row-gap|column-gap|inset)(?:-(?:top|right|bottom|left|block|inline)(?:-(?:start|end))?)?\s*:\s*([^;{}]+)(?=[;}])/gi,
     message: 'espaciado fuera de la grilla de 4px',
-    fix: 'Los valores sueltos rompen la alineación con todo lo demás y nadie recuerda después por qué era 13px. Usá var(--space-*).',
+    fix: 'Los valores sueltos rompen la alineación con todo lo demás y nadie recuerda después por qué era 13px. Usá la escala de espaciado del proyecto (en la plantilla de esta skill, var(--space-*)); si el proyecto no tiene escala, redondeá a múltiplos de 4.',
     skipFile: (filePath) => TOKEN_FILE_PATTERN.test(path.basename(filePath)),
     skip: (m) => {
       const value = m[1];
       if (/var\(|calc\(|auto|inherit|%|em\b|rem\b|ch\b|vh\b|vw\b/.test(value)) return true;
       const pxValues = [...value.matchAll(/(-?\d+(?:\.\d+)?)px/g)].map(x => parseFloat(x[1]));
       if (pxValues.length === 0) return true;
-      return pxValues.every(v => v % 4 === 0);   // 0, 4, 8, 12… pasan
+      // 0, 4, 8, 12… pasan; 1 y 2px también (filete y medio paso: --space-3xs es 2px)
+      return pxValues.every(v => v % 4 === 0 || Math.abs(v) <= 2);
     },
   },
 
@@ -341,6 +412,16 @@ const RULES = [
     pattern: /\.innerHTML\s*=\s*[`'"][^`'"]*\$\{|\.innerHTML\s*=\s*[^;]*\+/g,
     message: 'innerHTML con interpolación de variables',
     fix: 'Vector de XSS si el dato viene del usuario o del backend. Usá textContent, o createElement + append para armar el nodo.',
+  },
+  {
+    // Asignación directa desde una variable o propiedad, sin literal ni concatenación
+    id: 'security/innerhtml-variable',
+    category: 'security',
+    severity: SEVERITY.WARN,
+    exts: [...SCRIPTS, '.js', '.ts', '.html'],
+    pattern: /\.innerHTML\s*\+?=\s*(?![`'"])[A-Za-z_$][^;\n+`]*;/g,
+    message: 'innerHTML asignado desde una variable',
+    fix: 'Si el valor puede traer datos del usuario o del backend es un vector de XSS. Usá textContent; si es HTML propio y confiable, dejalo y documentá de dónde viene.',
   },
   {
     id: 'security/blade-unescaped-output',
@@ -431,6 +512,20 @@ function maskNonCode(content) {
     .replace(/(^|[\s;{}])\/\/[^\n]*/g, (m, p) => p + blank(m.slice(p.length)));
 }
 
+// Las reglas de markup recortan la etiqueta con [^>]*. En plantillas y JSX hay `>`
+// que no cierran la etiqueta: `->` y `=>` (PHP, funciones flecha) y los que quedan
+// dentro de {{ }} / {!! !!}. Sin enmascararlos, la etiqueta se corta ahí y los
+// atributos que siguen (alt, aria-label, hx-trigger) "no existen" para la regla.
+// Se reemplazan por un carácter del mismo largo: los índices y las líneas no cambian.
+const TAG_BREAKER = '›';
+function maskTagBreakers(content, ext) {
+  let out = content.replace(/(?<!-)->|=>/g, (m) => m[0] + TAG_BREAKER);
+  if (TEMPLATES.includes(ext)) {
+    out = out.replace(/\{\{[\s\S]*?\}\}|\{!![\s\S]*?!!\}/g, (m) => m.replace(/>/g, TAG_BREAKER));
+  }
+  return out;
+}
+
 // ---------------------------------------------------------------------------
 // Motor
 // ---------------------------------------------------------------------------
@@ -446,7 +541,7 @@ function walk(dir, files = []) {
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       if (!IGNORED_DIRS.has(entry.name) && !entry.name.startsWith('.')) walk(full, files);
-    } else if (EXTENSIONS.has(path.extname(entry.name).toLowerCase())) {
+    } else if (EXTENSIONS.has(path.extname(entry.name).toLowerCase()) && !/\.min\.(js|css)$/i.test(entry.name)) {
       files.push(full);
     }
   }
@@ -471,6 +566,9 @@ function auditFile(filePath, categories, includeAll = false) {
   }
 
   const findings = [];
+  const isMarkup = MARKUP.includes(ext);
+  const masked = isMarkup ? maskTagBreakers(content, ext) : content;
+  const maskedNoComments = isMarkup ? maskTagBreakers(maskNonCode(content), ext) : null;
 
   for (const rule of RULES) {
     if (!rule.exts.includes(ext)) continue;
@@ -478,7 +576,11 @@ function auditFile(filePath, categories, includeAll = false) {
     if (!categories && !includeAll && OPT_IN_CATEGORIES.has(rule.category)) continue;
     if (rule.skipFile && rule.skipFile(filePath)) continue;
 
-    const text = rule.stripComments ? maskNonCode(content) : content;
+    // Las reglas de seguridad leen el contenido tal cual: buscan `{!! !!}` y código.
+    const useMask = isMarkup && rule.category !== 'security';
+    const text = rule.stripComments
+      ? (useMask ? maskedNoComments : maskNonCode(content))
+      : (useMask ? masked : content);
     const re = new RegExp(rule.pattern.source, rule.pattern.flags);
     let match;
     let guard = 0;
